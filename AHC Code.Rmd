@@ -1,0 +1,83 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+---
+```{r}
+poverty <- read.csv2("D:/CentralJavaPoverty.csv") 
+
+##penetuan jarak
+poverty_dist <- dist(poverty, method = "euclidean")
+```
+```{r}
+library(corrplot)
+cor.poverty <- cor(poverty)
+corrplot(cor.poverty, order = 'original', type = 'upper', method = "color", 
+         tl.pos = 'tp', tl.col = "black", col = COL2('RdYlBu', 100))
+corrplot(cor.poverty, add = TRUE, type = 'lower', method = 'number', order = 'original', 
+         diag = FALSE, tl.pos = 'n', cl.pos = 'n', col = COL2('RdYlBu', 100))
+```
+```{r}
+par(mfrow = c(1,3))
+plot(cs <- hclust(poverty_dist, method = "single"), main = "Dendogram Metode Single")
+plot(cc <- hclust(poverty_dist, method = "complete"), main = "Dendogram Metode Complete")
+plot(ca <- hclust(poverty_dist, method = "average"), main = "Dendogram Metode Average")
+```
+```{r}
+d.cs <- cophenetic(cs)
+c.cs <- cor(poverty_dist, d.cs)
+d.cc <- cophenetic(cc)
+c.cc <- cor(poverty_dist, d.cc)
+d.ca <- cophenetic(ca)
+c.ca <- cor(poverty_dist, d.ca)
+data.frame(cophe.single=c.cs, cophe.complete=c.cc, cophe.average=c.ca)
+```
+```{r}
+library(dplyr)
+library(sp)
+library(RColorBrewer)
+library(raster)
+grp <- cutree(cc, k = 2)
+df_cl <- mutate(poverty, cluster = grp)
+count(df_cl, cluster)
+df_cl
+```
+```{r}
+KAB <- readRDS("C:/Users/acer/Documents/Kuliah/gadm36_IDN_2_sp.rds")
+JATENG <- KAB[KAB$NAME_1 == "Jawa Tengah", ]
+kab.jateng <- JATENG$NAME_2
+kab.jateng
+```
+```{r}
+par(mfrow = c(1,1))
+datkabjateng <- read.xlsx(file = "C:/Users/kab.jateng.kemiskinan.xlsx", sheetIndex = 1)
+plot(JATENG, col = c("#FFA07A","#FFED8B")[datkabjateng$cluster], axes = 
+       TRUE, cex = 0.25,border = "black")
+text(JATENG, datkabjateng$kabupaten_kota, cex = 0.3)
+legend("bottomright", legend = c("Klaster 1", "Klaster 2"), col = c("#FFA07A","#FFED8B"),
+       inset=.02, fill= c("#FFA07A","#FFED8B"), cex = 0.7, bty = "n")
+```
+```{r}
+aggregate(poverty, by=list(cluster=df_cl$cluster), mean)
+```
+```{r}
+library(xlsx)
+poverty <- read.xlsx(file = "C:/Users/acer/Documents/Kuliah/CentralJavaPoverty.xlsx", sheetIndex = 7) 
+rownames(poverty) <- poverty$kabupaten_kota
+poverty <- poverty[, -which(names(poverty) == "kabupaten_kota")]
+poverty <- na.omit(poverty)
+povertys <- scale(poverty)
+poverty_dist <- dist(povertys, method = "euclidean")
+
+par(mfrow = c(1,3))
+plot(cs <- hclust(poverty_dist, method = "single"), main = "Metode Single")
+plot(cc <- hclust(poverty_dist, method = "complete"), main = "Metode Complete")
+plot(ca <- hclust(poverty_dist, method = "average"), main = "Metode Average")
+```
+```{r}
+par(mfrow = c(1,1))
+plot(cs <- hclust(poverty_dist, method = "single"), main = "Dendrogram Metode Single")
+plot(cc <- hclust(poverty_dist, method = "complete"), main = "Dendrogram Metode Complete")
+plot(ca <- hclust(poverty_dist, method = "average"), main = "Dendrogram Metode Average")
+```
